@@ -21,4 +21,43 @@ const AnalyzeAbsenceDataInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Seasonality data in JSON format, indicating the impact of different seasons on absence rates. Example: {\
+      'Seasonality data in JSON format, indicating the impact of different seasons on absence rates. Example: { "winter": 1.2, "summer": 1.5 }'
+    ),
+});
+export type AnalyzeAbsenceDataInput = z.infer<
+  typeof AnalyzeAbsenceDataInputSchema
+>;
+
+export type AnalyzeAbsenceDataOutput = string;
+
+export async function analyzeAbsenceData(
+  input: AnalyzeAbsenceDataInput
+): Promise<AnalyzeAbsenceDataOutput> {
+  return analyzeAbsenceDataFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'analyzeAbsenceDataPrompt',
+  input: {schema: AnalyzeAbsenceDataInputSchema},
+  prompt: `You are an HR analyst expert. Analyze the provided historical absence data and seasonality trends to suggest future staffing needs.
+
+Historical Absence Data (CSV):
+{{{historicalAbsenceData}}}
+
+Seasonality Data (JSON):
+{{{seasonalityData}}}
+
+Based on this data, provide a concise analysis and actionable staffing suggestions for the upcoming periods. Focus on identifying patterns and predicting potential understaffing.`,
+});
+
+const analyzeAbsenceDataFlow = ai.defineFlow(
+  {
+    name: 'analyzeAbsenceDataFlow',
+    inputSchema: AnalyzeAbsenceDataInputSchema,
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    const {text} = await prompt(input);
+    return text;
+  }
+);
